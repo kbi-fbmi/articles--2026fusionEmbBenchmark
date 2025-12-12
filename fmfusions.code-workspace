@@ -1,0 +1,93 @@
+{
+  "folders": [
+    {
+      "name": "fmlib",
+      "path": "fmlib"
+    },
+    {
+      "name": "fmdnabert",
+      "path": "fmextractors/fmdnabert"
+    },
+    {
+      "name": "fmevo",
+      "path": "fmextractors/fmevo"
+    },
+    {
+      "name": "fmhyena",
+      "path": "fmextractors/fmhyena"
+    },
+    {
+      "name": "fmnt",
+      "path": "fmextractors/fmnt"
+    },
+    {
+      "name": "fusion-classifiers",
+      "path": "fusion-classifiers"
+    },
+    {
+      "name": "notebooks",
+      "path": "notebooks"
+    },
+  ],
+  "settings": {
+    // Specific configurations for individual folders
+    "fmdnabert.python.defaultInterpreterPath": "${workspaceFolder:fmdnabert}/.venv/bin/python",
+    "fmnt.python.defaultInterpreterPath": "${workspaceFolder:fmnt}/.venv/bin/python",
+    "fmlib.python.defaultInterpreterPath": "${workspaceFolder:fmlib}/.venv/bin/python",
+    "fmevo.python.defaultInterpreterPath": "${workspaceFolder:fmevo}/.venv/bin/python",
+    "fmhyena.python.defaultInterpreterPath": "${workspaceFolder:fmhyena}/.venv/bin/python",
+    "fusion-classifiers.python.defaultInterpreterPath": "${workspaceFolder:fusion-classifiers}/.venv/bin/python",
+    "notebooks.python.defaultInterpreterPath": "${workspaceFolder:notebooks}/.venv/bin/python",
+    "editor.formatOnSave": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "[python]": {
+      "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "fmlib.python.testing.pytestArgs": [
+      "tests"
+    ],
+    "fmdnabert.python.testing.pytestArgs": [
+      "tests"
+    ],
+    "fmevo.python.testing.pytestArgs": [
+      "tests"
+    ],
+    "fmhyena.python.testing.pytestArgs": [
+      "tests"
+    ],
+    "fmnt.python.testing.pytestArgs": [
+      "tests"
+    ],
+    "fusion-classifiers.python.testing.pytestArgs": [
+      "tests"
+    ],
+    "notebooks.python.testing.pytestArgs": [
+      "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "visualstudioexptteam.vscodeintellicode",
+      "njpwerner.autodocstring",
+      "charliermarsh.ruff"
+    ],
+    "unwantedRecommendations": []
+  },
+  "launch": {
+    "configurations": [
+      {
+        "name": "Python Debugger: Current File",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${file}",
+        "console": "integratedTerminal"
+      }
+    ]
+  }
+}

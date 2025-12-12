@@ -1,0 +1,23 @@
+[project]
+name = "fmhyena"
+version = "0.1.0"
+description = "HyenaDNA embeddings extractor"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "accelerate>=1.12.0",
+    "fmlib",
+    "pandas>=2.2.3",
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+]
+
+[tool.uv.sources]
+fmlib = { path = "../../fmlib" }
+
+[tool.ruff]
+line-length = 120
+show-fixes = true
+
+[tool.ruff.pydocstyle]
+convention = "google"

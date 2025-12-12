@@ -1,0 +1,33 @@
+[project]
+name = "fmnt"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "biopython>=1.84",
+    "dynaconf>=3.2.6",
+    "fmlib",
+    "jax[cuda12]>=0.4.30",
+    "matplotlib>=3.9.3",
+    "minifasta>=3.0.3",
+    "nucleotide-transformer",
+    "numpy>=2.0.2",
+    "pandas>=2.2.3",
+    "plotly>=5.24.1",
+    "pytest>=8.3.4",
+    "ruff>=0.8.2",
+    "sync>=1.0.0",
+]
+
+[tool.uv.sources]
+nucleotide-transformer = { git = "https://github.com/instadeepai/nucleotide-transformer", rev = "main" }
+fmlib = { path = "../../fmlib" }
+
+
+[tool.ruff]
+line-length = 120
+show-fixes = true
+
+[tool.ruff.pydocstyle]
+convention = "google"

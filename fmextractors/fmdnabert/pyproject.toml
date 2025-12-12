@@ -1,0 +1,29 @@
+[project]
+name = "fmdnabert"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fmlib",
+    "numpy<2.0.0",
+    "pandas>=2.3.0",
+    "einops==0.6.1",
+    "transformers==4.29.2",
+    "peft==0.3.0",
+    "omegaconf==2.3.0",
+    "torch==1.13.1",
+    "evaluate==0.4.0",
+    "accelerate==0.20.3",
+    "scikit-learn==1.2.2",
+]
+
+[tool.uv.sources]
+fmlib = { path = "../../fmlib" }
+
+[tool.ruff]
+line-length = 120
+show-fixes = true
+
+[tool.ruff.pydocstyle]
+convention = "google"

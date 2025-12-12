@@ -1,0 +1,45 @@
+[project]
+name = "fmlib"
+version = "0.1.20"
+description = "# FBME Bio Library – Tools for Biomedical and Bioinformatics Research"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "biopython>=1.85",
+    "numpy>=1.24.3",
+    "pytest>=8.3.4",
+    "ruff>=0.9.7",
+    "tqdm>=4.67.1",
+    "zenodo-get>=2.0.0",
+]
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["fmlib"]
+
+
+[tool.ruff]
+line-length = 120
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "N",
+    "D",
+    "ANN",
+    "C4",
+    "SIM",
+    "PTH",
+    "FBT",
+    "A",
+    "COM",
+    "Q",
+    "RET",
+    "ARG",
+    #"ERA",
+]
