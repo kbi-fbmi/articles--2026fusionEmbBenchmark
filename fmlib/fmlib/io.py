@@ -1,56 +1,22 @@
+import os
+
+os.environ["KERAS_BACKEND"] = "torch"
+
 import json
 import logging
-import os
 import re
 import shutil
 from pathlib import Path
 
 import numpy as np
-import zenodo_get as zg
+import pandas as pd
+import torch
 from Bio import SeqIO
+from keras.utils import to_categorical
+from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 
 from fmlib import fm
-
-
-def zenodo_get_and_unzip(zenodo_id: str, download_file: str, destination_dir: str) -> None:
-    """Download a dataset from Zenodo, unzip it, and organize it into the specified directory.
-
-    Parameters
-    ----------
-    zenodo_id : str
-        The Zenodo record ID to download.
-    download_file : str
-        The name of the zip file to download.
-    destination_dir : str
-        The directory where the dataset will be stored.
-
-    Behavior
-    --------
-    - Check if the target dataset folder exists; if not, create it.
-    - Download the dataset zip file from Zenodo using the provided ID.
-    - Unzip the downloaded file into the destination directory.
-    - Remove the zip file after extraction.
-    - Print progress and error messages during the process.
-
-    """
-    dest_dir = Path(destination_dir)
-
-    try:
-        zg.download(zenodo_id, output_dir=str(dest_dir))
-        print(f"Downloaded {dest_dir}.")
-
-        # Unzip the downloaded file
-        print(f"Unzipping {download_file}...")
-        shutil.unpack_archive(dest_dir / download_file, destination_dir)
-        print("Unzipping complete.")
-
-        # Clean up the downloaded zip file
-        Path.unlink(dest_dir / download_file)
-        print(f"Removed {download_file}.")
-
-    except Exception as e:
-        print(f"Error downloading or unzipping the dataset: {e}")
 
 
 def read_fasta(file_path, fused_lambda=None):
@@ -144,3 +110,23 @@ def convert_sequence_to_onehot_ACGT(sequence):
     if not np.all(onehot.sum(axis=1)):
         raise ValueError("Invalid nucleotide in sequence")
     return onehot
+
+
+def load_fusion_embeddings(seq1_path, seq2_path, response_path):
+    T1 = pd.read_csv(seq1_path, header=None)
+    T2 = pd.read_csv(seq2_path, header=None)
+    T1.columns = [f"{col}_T1" for col in T1.columns]
+    T2.columns = [f"{col}_T2" for col in T2.columns]
+    x = pd.concat([T1, T2], axis=1)
+
+    # Load and encode labels
+    y = pd.read_csv(response_path, header=None).iloc[:, 0]
+    label_encoder = LabelEncoder()
+    y_encoded = label_encoder.fit_transform(y)
+    y_onehot = to_categorical(y_encoded)
+
+    # Convert to torch tensors
+    x_tensor = torch.tensor(x.values, dtype=torch.float32)
+    y_tensor = torch.tensor(y_onehot, dtype=torch.float32)
+
+    return x_tensor, y_tensor

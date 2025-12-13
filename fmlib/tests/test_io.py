@@ -1,4 +1,6 @@
 # import fmlib.fm as fm
+from pathlib import Path
+
 import numpy as np
 
 import fmlib.io as io
@@ -43,3 +45,17 @@ def test_onehot_encoding():
     assert np.array_equal(output, expected_output), (
         f"One-hot encoding output does not match expected output. Output: {output}"
     )
+
+
+# def test_load_embeddings():
+#     """Test loading embeddings from a file."""
+#     embeddings_folder = Path("../notebooks/download") / Path("embeddings")
+#     data = io.load_fusion_embeddings(
+#         embeddings_folder / "nt_train_seq1.csv",
+#         embeddings_folder / "nt_train_seq2.csv",
+#         embeddings_folder / "fusionai_train_target.csv",
+#     )
+#     print(data)
+
+
+# test_load_embeddings()

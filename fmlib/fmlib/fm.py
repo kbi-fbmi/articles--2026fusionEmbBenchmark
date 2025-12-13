@@ -4,7 +4,7 @@ import concurrent.futures
 
 
 def hello():
-    print("Ahoj, this is a helper function!")
+    print("Hello, this is a helper function!")
 
 
 def tokenize_sequence_parallel(seq, tokenize_function, max_workers=16) -> list:

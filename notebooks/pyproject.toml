@@ -7,14 +7,10 @@ requires-python = ">=3.11"
 dependencies = [
     "fmlib",
     "jupyter>=1.1.1",
-    "keras>=3.10.0",
     "matplotlib>=3.10.3",
     "pandas>=2.3.0",
-    "scikit-learn>=1.7.0",
-    "tensorflow>=2.19.0",
-    "tf-keras>=2.15.0",
-    "torch>=2.7.1",
     "tqdm>=4.67.1",
+    "zenodo-get>=2.0.0",
 ]
 
 [tool.uv.sources]

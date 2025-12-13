@@ -4,19 +4,20 @@ import pickle as pkl
 import sys
 from pathlib import Path
 
+import fmlib.io as fmio
 import pandas as pd
 import torch
 
-import ai
+import ai as ai
 
 
 def load_and_prepare_data(data_folder, prefix):
-    train = ai.load_fusion_embedings(
+    train = fmio.load_fusion_embeddings(
         data_folder / f"{prefix}_train_seq1.csv",
         data_folder / f"{prefix}_train_seq2.csv",
         data_folder / "fusionai_train_target.csv",
     )
-    test_full = ai.load_fusion_embedings(
+    test_full = fmio.load_fusion_embeddings(
         data_folder / f"{prefix}_test_seq1.csv",
         data_folder / f"{prefix}_test_seq2.csv",
         data_folder / "fusionai_test_target.csv",
@@ -84,40 +85,60 @@ def main(args):
     data_folder = Path(args.data_folder)
 
     train, valid, test = load_and_prepare_data(data_folder, prefix)
+
     x_train = sample_training_data(train, num_of_samples)
     num_of_samples = x_train[0].shape[0]
 
     input_dim = x_train[0].shape[1]
     print(f"Input dimension: {input_dim}")
-    model = ai.get_fully_connected(input_dim)
 
-    print(f"Starting training for {args.epochs} epochs...")
-    model, history = ai.train_adam(x_train, valid, model, num_epochs=args.epochs, verbose=True)
+    if args.classifier_type == "nn":
+        model = ai.get_fully_connected(input_dim)
 
-    print("Evaluating model...")
-    evaluation_results = ai.evaluate_model(model, test)
+        print(f"Starting training for {args.epochs} epochs...")
+        model, history = ai.train_adam(x_train, valid, model, num_epochs=args.epochs, verbose=True)
 
-    save_results(args.output_folder, prefix, num_of_samples, model, history, evaluation_results)
+        print("Evaluating model...")
+        evaluation_results = ai.evaluate_model(model, test)
+
+        save_results(args.output_folder, prefix, num_of_samples, model, history, evaluation_results)
 
     # SVM linear
-    custom_kernels = [{"name": "Linear", "kernel": "linear", "C": 1.0}]
-    evaluation_results_svm = {}
+    if args.classifier_type == "svm":
+        print(f"Training and evaluating SVM model...")
 
-    print("\n Evaluating Model with SVM:")
-    evaluation_results_svm = ai.train_and_evaluate_svm(x_train, test, valid, max_samples=40000, kernels=custom_kernels)
-    with open(os.path.join(args.output_folder, f"{prefix}_svm_linear_{num_of_samples}.pkl"), "wb") as f:
-        pkl.dump(evaluation_results_svm, f)
+        custom_kernels = [{"name": "Linear", "kernel": "linear", "C": 1.0}]
+        evaluation_results_svm = {}
+
+        print("\n Evaluating Model with SVM:")
+        evaluation_results_svm = ai.train_and_evaluate_svm(
+            x_train, test, valid, max_samples=40000, kernels=custom_kernels
+        )
+        with open(os.path.join(args.output_folder, f"{prefix}_svm_linear_{num_of_samples}.pkl"), "wb") as f:
+            pkl.dump(evaluation_results_svm, f)
 
     # SVM RBF
-    custom_kernels = [{"name": "RBF", "kernel": "rbf", "C": 1.0, "gamma": "scale"}]
-    evaluation_results_svm = ai.train_and_evaluate_svm(x_train, test, valid, max_samples=40000, kernels=custom_kernels)
-    with open(os.path.join(args.output_folder, f"{prefix}_svm_rbf_{num_of_samples}.pkl"), "wb") as f:
-        pkl.dump(evaluation_results_svm, f)
+    if args.classifier_type == "svm_rbf":
+        print(f"Training and evaluating SVM RBF model...")
+        custom_kernels = [{"name": "RBF", "kernel": "rbf", "C": 1.0, "gamma": "scale"}]
+        evaluation_results_svm = ai.train_and_evaluate_svm(
+            x_train, test, valid, max_samples=40000, kernels=custom_kernels
+        )
+        with open(os.path.join(args.output_folder, f"{prefix}_svm_rbf_{num_of_samples}.pkl"), "wb") as f:
+            pkl.dump(evaluation_results_svm, f)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train neural network on specific embeddings")
     parser.add_argument("--epochs", type=int, required=True, help="Number of training epochs")
+    parser.add_argument(
+        "--classifier-type",
+        type=str,
+        default="nn",
+        choices=["nn", "svm", "svm_rbf"],
+        help="Type of classifier to use (default: nn)",
+    )
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     parser.add_argument(
         "--embedding-type",
         required=True,
@@ -140,12 +161,14 @@ if __name__ == "__main__":
             [
                 "--epochs",
                 "300",
+                "--classifier-type",
+                "nn",
                 "--embedding-type",
                 "nt",
                 "--data-folder",
-                "/home/user/fmfusions/data",
+                ".",
                 "--output-folder",
-                "/home/user/fmfusions/output",
+                "output",
                 # "--num-of-samples", "1000",  # Uncomment if you want to set this
             ]
         )
