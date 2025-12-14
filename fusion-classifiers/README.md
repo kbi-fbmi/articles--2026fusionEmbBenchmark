@@ -224,7 +224,6 @@ Tab-separated text files with columns:
 
 Key packages (see [pyproject.toml](pyproject.toml) for full list):
 - **keras**: Model architecture and training (3.10+)
-- **tensorflow/tf-keras**: Backend for Keras (2.19+)
 - **torch**: PyTorch for tensor operations (2.7+)
 - **scikit-learn**: Evaluation metrics and utilities (1.7+)
 - **pandas**: Data manipulation
@@ -283,13 +282,3 @@ Download precomputed embeddings from [Zenodo](https://zenodo.org/records/1789858
 - [Notebooks Analysis](../notebooks/README.md)
 - [Embedding Extractors](../fmextractors/)
 
-## Citation
-
-If you use this code, please cite:
-- FusionGDB2: https://compbio.uth.edu/FusionGDB2/
-- Original FusionAI paper
-- Respective foundation model papers (DNABERT, NT, Hyena, EVO2)
-
-## License
-
-See LICENSE file for details.
