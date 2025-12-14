@@ -2,31 +2,29 @@
 
 This repository contains benchmarking framework for evaluating multiple genomic foundation models on gene fusion detection from DNA sequences. The project implements embeddings extraction from various state-of-the-art foundation models and trains classification models to detect fusion genes.
 
-## Overviewls
+## Overviews
 
 Gene fusions are hybrid genes formed from portions of two different genes and are important biomarkers in cancer and other diseases. This project evaluates and compares the performance of modern genomic foundation models in detecting gene fusions from DNA sequences.
 
 ## Results
 
-Comprehensive benchmarking results comparing model performance on gene fusion detection are available in the notebooks. See the [analysis notebook](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/compare_models.ipynb) for detailed comparisons.
+Comprehensive benchmarking results comparing model performance on gene fusion detection are available in the [notebook](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/compare_models.ipynb).
 
 ### Key Components
 
 - **fmlib**: Core biomedical library with utilities for data loading, preprocessing, and sequence handling
 - **fmextractors**: Embedding extraction modules for multiple foundation models
-- **fusion-classifiers**: Classification models using embeddings as features
+- **fusion-classifiers**: Classification models using embeddings as features and fusionAI model
 - **notebooks**: Analysis and visualization notebooks
 
 ## Models Benchmarked
 
 The following genomic foundation models are benchmarked:
 
-| Model | Description | Status |
-|-------|-------------|--------|
-| **DNABERT** | Domain-specific BERT model trained on DNA sequences | ✓ |
-| **Nucleotide Transformer (NT)** | Large-scale protein language model adapted for DNA | ✓ |
-| **Hyena** | Efficient long-range sequence modeling | ✓ |
-| **EVO2** | Evolution-based genomic foundation model | ✓ |
+- **DNABERT** 
+- **Nucleotide Transformer**
+- **Hyena**
+- **EVO2** 
 
 ## Data
 - **Dataset from FusionAI project**:[FusionAI data homepage](https://compbio.uth.edu/FusionGDB2/FusionAI/)
@@ -68,7 +66,7 @@ fmfusions/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/kbi-fbmi/articles--2025expiratory.git
+   git clone https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark.git
    cd fmfusions
    ```
 
