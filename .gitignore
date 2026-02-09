@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
+fmextractors/fmevo/evo2/
 notebooks/download/
 # Distribution / packaging
 .Python

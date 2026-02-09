@@ -29,4 +29,4 @@ pip install .
 #python main.py
 pip install transformer_engine[pytorch]==1.13
 pip install pandas
-pip install -e ../../../fmlib
+pip install -e ../fmlib
