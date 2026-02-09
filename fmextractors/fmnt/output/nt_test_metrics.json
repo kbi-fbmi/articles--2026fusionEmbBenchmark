@@ -1,0 +1,12 @@
+{
+  "model": "Nucleotide Transformer",
+  "embd_type": "mean",
+  "total_samples": 214,
+  "total_time_seconds": 60.507951736450195,
+  "inference_latency_ms_per_sample": 282.73685958897954,
+  "throughput_samples_per_second": 3.536725237901016,
+  "avg_batch_time_seconds": 1.1204757028155856,
+  "min_batch_time_seconds": -1.071465253829956,
+  "max_batch_time_seconds": 5.424526691436768,
+  "device": "gpu"
+}

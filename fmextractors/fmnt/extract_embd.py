@@ -1,5 +1,6 @@
 import argparse
 import concurrent.futures
+import time
 from pathlib import Path
 from typing import Any, Callable, List
 
@@ -9,7 +10,7 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from fmlib import io
-from fmlib.fm import extr_key, tokenize_sequence_parallel
+from fmlib.fm import compute_metrics_summary, extr_key, save_metrics, tokenize_sequence_parallel
 from jax.lib import xla_bridge
 from nucleotide_transformer.pretrained import get_pretrained_model
 
@@ -23,12 +24,15 @@ def embeding_nt(
     parameters: Any,
     random_key: Any,
     embd_type: str,
-) -> np.ndarray:
+) -> tuple[np.ndarray, dict]:
     print(f"Starting embedding extraction for layer: {layer_name}")
 
     num_batches = len(tokens) // batch_size + (len(tokens) % batch_size > 0)
     embeddings: np.ndarray | None = None
+    batch_times = []
+
     for i in range(num_batches):
+        batch_start = time.time()
         batch_tokens = tokens[i * batch_size : (i + 1) * batch_size]
         print(f"Processing batch {i + 1}/{num_batches} with {len(batch_tokens)} tokens")
         batch_embeddings = nt_model.apply(parameters, random_key, batch_tokens)
@@ -39,10 +43,17 @@ def embeding_nt(
         embeddings = (
             np.concatenate((embeddings, selected_embeddings), axis=0) if embeddings is not None else selected_embeddings
         )
-        print(f"Batch {i + 1} done")
+        batch_time = time.time() - batch_start
+        batch_times.append(batch_time)
+        print(f"Batch {i + 1} done - Time: {batch_time:.3f}s")
+
+    metrics = {
+        "batch_times": batch_times,
+        "total_samples": len(tokens),
+    }
 
     print("Embedding extraction completed")
-    return embeddings
+    return embeddings, metrics
 
 
 def main():
@@ -96,7 +107,10 @@ def main():
 
     emb_pos = [tokens_fusions1.shape[1] // 2]
     print("Extracting embeddings for test sequences")
-    emb_data1 = embeding_nt(
+
+    total_start = time.time()
+
+    emb_data1, metrics1 = embeding_nt(
         tokens_fusions1,
         4,
         emb_pos,
@@ -106,7 +120,7 @@ def main():
         random_key,
         EMBD_TYPE,
     )
-    emb_data2 = embeding_nt(
+    emb_data2, metrics2 = embeding_nt(
         tokens_fusions2,
         4,
         emb_pos,
@@ -117,6 +131,8 @@ def main():
         EMBD_TYPE,
     )
 
+    total_time = time.time() - total_start
+
     print(f"Creating output folder at {OUTPUT_FOLDER}")
     Path(OUTPUT_FOLDER).mkdir(parents=True, exist_ok=True)
 
@@ -124,7 +140,18 @@ def main():
     pd.DataFrame(emb_data1[:, 0, :]).to_csv(Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq1.csv", index=False, header=False)
     pd.DataFrame(emb_data2[:, 0, :]).to_csv(Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq2.csv", index=False, header=False)
 
-    print("Processing completed successfully")
+    # Compute and save metrics using shared library
+    metrics_summary = compute_metrics_summary(
+        "Nucleotide Transformer",
+        EMBD_TYPE,
+        metrics1,
+        metrics2,
+        total_time,
+        device_info=xla_bridge.get_backend().platform,
+    )
+    save_metrics(metrics_summary, OUTPUT_FOLDER, OUTPUT_NAME)
+
+    print("\nProcessing completed successfully")
 
 
 if __name__ == "__main__":

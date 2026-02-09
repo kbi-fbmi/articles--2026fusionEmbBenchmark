@@ -1,41 +1,13 @@
 import argparse
+import time
 from pathlib import Path
 
 import pandas as pd
 import torch
 import torch.nn as nn
 from fmlib import io
+from fmlib.fm import extr_key, compute_metrics_summary, save_metrics
 from transformers import AutoModel, AutoTokenizer
-
-
-def extr_key(dict_list, key):
-    print(f"Extracting key '{key}' from dictionary list")
-    return [d[key] for d in dict_list]
-
-
-def load_fusions_from_fusionaitxt(file_path, fused_lambda=None):
-    data = []
-    with open(file_path, "r") as f:
-        for line in f:
-            columns = line.strip().split("\t")
-            if len(columns) == 11:
-                entry = {
-                    "gene1": columns[0],
-                    "chr1": columns[1],
-                    "pos1": int(columns[2]),
-                    "strand1": columns[3],
-                    "gene2": columns[4],
-                    "chr2": columns[5],
-                    "pos2": int(columns[6]),
-                    "strand2": columns[7],
-                    "sequence1": columns[8],
-                    "sequence2": columns[9],
-                    "target": columns[10],
-                }
-                if "N" in entry["sequence1"] or "N" in entry["sequence2"]:
-                    continue
-                data.append(entry)
-    return data
 
 
 # Model nastavenĂ­
@@ -52,9 +24,15 @@ model.eval()
 def embedding_hyena(tokens, batch_size, embd_type):
     projection_layer = nn.Linear(256, 2048).to(device)
     embeddings = []
+    batch_times = []
+    
+    # Track peak VRAM
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats(device)
 
     num_batches = len(tokens) // batch_size + (len(tokens) % batch_size > 0)
     for i in range(num_batches):
+        batch_start = time.time()
         batch_tokens = tokens[i * batch_size : (i + 1) * batch_size].to(device)
 
         with torch.no_grad():
@@ -68,10 +46,19 @@ def embedding_hyena(tokens, batch_size, embd_type):
             selected_embeddings = batch_embeddings[:, middle_index : middle_index + 1, :]
 
         embeddings.append(selected_embeddings)
+        batch_time = time.time() - batch_start
+        batch_times.append(batch_time)
 
-        print(f"Processing batch {i + 1}/{num_batches} - Saved {selected_embeddings.shape[0]} embeddings")
+        print(f"Processing batch {i + 1}/{num_batches} - Saved {selected_embeddings.shape[0]} embeddings - Time: {batch_time:.3f}s")
 
-    return torch.cat(embeddings, dim=0)
+    metrics = {
+        "batch_times": batch_times,
+        "total_samples": len(tokens),
+    }
+    if torch.cuda.is_available():
+        metrics["peak_vram_mb"] = torch.cuda.max_memory_allocated(device) / 1024 / 1024
+    
+    return torch.cat(embeddings, dim=0), metrics
 
 
 def save_embeddings(embeddings, output_folder, prefix):
@@ -104,8 +91,12 @@ def main():
     OUTPUT_NAME = args.output_name
     EMBD_TYPE = args.embd_type
 
-    fusion_data = load_fusions_from_fusionaitxt(PATH_DATA)
-    emb_seq1 = embedding_hyena(
+    fusion_data = io.load_fusions_from_fusionaitxt(PATH_DATA)
+    
+    # Track total processing time
+    total_start = time.time()
+    
+    emb_seq1, metrics1 = embedding_hyena(
         tokenizer(
             extr_key(fusion_data, "sequence1"),
             padding=True,
@@ -117,7 +108,7 @@ def main():
         EMBD_TYPE,
     )
 
-    emb_seq2 = embedding_hyena(
+    emb_seq2, metrics2 = embedding_hyena(
         tokenizer(
             extr_key(fusion_data, "sequence2"),
             padding=True,
@@ -128,11 +119,19 @@ def main():
         32,
         EMBD_TYPE,
     )
+    
+    total_time = time.time() - total_start
 
     save_embeddings(emb_seq1, OUTPUT_FOLDER, f"{OUTPUT_NAME}_seq1")
     save_embeddings(emb_seq2, OUTPUT_FOLDER, f"{OUTPUT_NAME}_seq2")
-
-    print("Processing completed successfully")
+    
+    # Compute and save metrics using shared library
+    metrics_summary = compute_metrics_summary(
+        "HyenaDNA", EMBD_TYPE, metrics1, metrics2, total_time, device_info=torch.cuda.get_device_name(device) if torch.cuda.is_available() else None
+    )
+    save_metrics(metrics_summary, OUTPUT_FOLDER, OUTPUT_NAME)
+    
+    print("\nProcessing completed successfully")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 import argparse
 import concurrent.futures
 import math
+import time
 from functools import partial
 from pathlib import Path
 
@@ -9,7 +10,7 @@ import numpy as np
 import pandas as pd
 import torch
 from fmlib import io
-from fmlib.fm import extr_key
+from fmlib.fm import compute_metrics_summary, extr_key, save_metrics
 from transformers import AutoModel, AutoTokenizer
 
 emb_counter = 0
@@ -18,6 +19,7 @@ tokenizer = AutoTokenizer.from_pretrained("zhihan1996/DNABERT-2-117M", trust_rem
 
 
 def tokenize_sequence_parallel(seq, tokenize_function, max_workers=16):
+    """Tokenize sequences in parallel, returning tokens and embedding positions."""
     print(f"Starting tokenization with {max_workers} workers")
     with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
         results = executor.map(tokenize_function, seq)
@@ -40,7 +42,14 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
 
     num_batches = len(tokens) // batch_size + (len(tokens) % batch_size > 0)
     embeddings = None
+    batch_times = []
+    
+    # Track peak VRAM
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+    
     for i in range(num_batches):
+        batch_start = time.time()
         batch_tokens = tokens[i * batch_size : (i + 1) * batch_size]
         # batch_tokens = batch_tokens.to("cuda:0")
         print(f"Processing batch {i + 1}/{num_batches} with {len(batch_tokens)} tokens")
@@ -55,10 +64,19 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
         embeddings = (
             np.concatenate((embeddings, selected_embeddings), axis=0) if embeddings is not None else selected_embeddings
         )
-        print(f"Batch {i + 1} done")
+        batch_time = time.time() - batch_start
+        batch_times.append(batch_time)
+        print(f"Batch {i + 1} done - Time: {batch_time:.3f}s")
 
+    metrics = {
+        "batch_times": batch_times,
+        "total_samples": len(tokens),
+    }
+    if torch.cuda.is_available():
+        metrics["peak_vram_mb"] = torch.cuda.max_memory_allocated() / 1024 / 1024
+    
     print("Embedding extraction completed")
-    return embeddings
+    return embeddings, metrics
 
 
 def padding_tokens(token, padding_size=2143, front_value=1, backvalue=2):
@@ -123,8 +141,13 @@ def main():
     nptokens_fusion2 = torch.concatenate(nptokens_fusion2).to("cuda:0")
     emb_positions2 = np.asarray(emb_positions)
 
-    emb_data1 = embeding_dna_bert(nptokens_fusion1, 2, emb_positions1, dnabert2_model, EMBD_TYPE)
-    emb_data2 = embeding_dna_bert(nptokens_fusion2, 2, emb_positions2, dnabert2_model, EMBD_TYPE)
+    total_start = time.time()
+    
+    emb_data1, metrics1 = embeding_dna_bert(nptokens_fusion1, 2, emb_positions1, dnabert2_model, EMBD_TYPE)
+    emb_data2, metrics2 = embeding_dna_bert(nptokens_fusion2, 2, emb_positions2, dnabert2_model, EMBD_TYPE)
+    
+    total_time = time.time() - total_start
+    
     print("Extracting embeddings for test sequences")
 
     print(f"Creating output folder at {OUTPUT_FOLDER}")
@@ -139,8 +162,14 @@ def main():
     pd.DataFrame(emb_data2[:, 0, :]).to_csv(
         Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq2.csv", index=False, header=False
     )
-
-    print("Processing completed successfully")
+    
+    # Compute and save metrics using shared library
+    metrics_summary = compute_metrics_summary(
+        "DNABERT-2", EMBD_TYPE, metrics1, metrics2, total_time
+    )
+    save_metrics(metrics_summary, OUTPUT_FOLDER, OUTPUT_NAME)
+    
+    print("\nProcessing completed successfully")
 
 
 if __name__ == "__main__":

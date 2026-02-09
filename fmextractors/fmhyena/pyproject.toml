@@ -5,6 +5,8 @@ description = "HyenaDNA embeddings extractor"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "accelerate>=1.12.0",
+    "fmlib>=0.1.24",
     "jupyter>=1.1.1",
     "keras>=3.10.0",
     "matplotlib>=3.10.3",
@@ -14,6 +16,7 @@ dependencies = [
     "tf-keras>=2.15.0",
     "torch>=2.7.1",
     "tqdm>=4.67.1",
+    "transformers>=5.1.0",
     "zenodo-get>=2.0.0",
 ]
 

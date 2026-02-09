@@ -1,6 +1,6 @@
 [project]
 name = "fmlib"
-version = "0.1.23"
+version = "0.1.25"
 description = "# FBME Bio Library – Tools for Biomedical and Bioinformatics Research"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,9 +12,11 @@ dependencies = [
     "pytest>=8.3.4",
     "ruff>=0.9.7",
     "scikit-learn==1.7.0",
-    "torch>=2.9.1",
     "tqdm>=4.67.1",
 ]
+
+[project.optional-dependencies]
+torch = ["torch>=1.13.0"]
 
 
 [build-system]

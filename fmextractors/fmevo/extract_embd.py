@@ -1,14 +1,19 @@
 import argparse
 import concurrent.futures
+import time
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
-from fmlib import io
-from fmlib.fm import extr_key, tokenize_sequence_parallel
-
 from evo2 import Evo2
+from fmlib import io
+from fmlib.fm import (
+    compute_metrics_summary,
+    extr_key,
+    save_metrics,
+    tokenize_sequence_parallel,
+)
 
 
 def evo_tokenize(sequence):
@@ -30,9 +35,16 @@ def embeding_evo(
 ):
     print(f"Starting embedding extraction for layer: {layer_name}")
     embeddings = torch.asarray([])
+    batch_times = []
+
+    # Track peak VRAM
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
     num_batches = len(tokens) // batch_size + (len(tokens) % batch_size > 0)
 
     for i in range(num_batches):
+        batch_start = time.time()
         batch_tokens = tokens[i * batch_size : (i + 1) * batch_size]
         print(f"Processing batch {i + 1}/{num_batches} with {len(batch_tokens)} tokens")
         _, batch_embeddings = evo2_model(
@@ -43,10 +55,19 @@ def embeding_evo(
         else:
             selected_embeddings = batch_embeddings[layer_name][:, emb_positions, :]
         embeddings = torch.cat((embeddings, selected_embeddings.cpu()), dim=0)
-        print(f"Batch {i + 1} done")
+        batch_time = time.time() - batch_start
+        batch_times.append(batch_time)
+        print(f"Batch {i + 1} done - Time: {batch_time:.3f}s")
+
+    metrics = {
+        "batch_times": batch_times,
+        "total_samples": len(tokens),
+    }
+    if torch.cuda.is_available():
+        metrics["peak_vram_mb"] = torch.cuda.max_memory_allocated() / 1024 / 1024
 
     print("Embedding extraction completed")
-    return embeddings
+    return embeddings, metrics
 
 
 def main():
@@ -90,7 +111,10 @@ def main():
 
     emb_pos = [tokens_fusion1.size(1) // 2]
     print("Extracting embeddings for test sequences")
-    emb1 = embeding_evo(
+
+    total_start = time.time()
+
+    emb1, metrics1 = embeding_evo(
         tokens_fusion1,
         4,
         emb_pos,
@@ -98,7 +122,7 @@ def main():
         layer_name="blocks.28.mlp.l3",
         embd_type=EMBD_TYPE,
     )
-    emb2 = embeding_evo(
+    emb2, metrics2 = embeding_evo(
         tokens_fusion2,
         4,
         emb_pos,
@@ -106,6 +130,8 @@ def main():
         layer_name="blocks.28.mlp.l3",
         embd_type=EMBD_TYPE,
     )
+
+    total_time = time.time() - total_start
 
     print(f"Creating output folder at {OUTPUT_FOLDER}")
     Path(OUTPUT_FOLDER).mkdir(parents=True, exist_ok=True)
@@ -119,7 +145,13 @@ def main():
         Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq2.csv", index=False, header=False
     )
 
-    print("Processing completed successfully")
+    # Compute and save metrics using shared library
+    metrics_summary = compute_metrics_summary(
+        "Evo2", EMBD_TYPE, metrics1, metrics2, total_time
+    )
+    save_metrics(metrics_summary, OUTPUT_FOLDER, OUTPUT_NAME)
+
+    print("\nProcessing completed successfully")
 
 
 if __name__ == "__main__":

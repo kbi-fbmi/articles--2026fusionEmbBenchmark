@@ -1,0 +1,13 @@
+{
+  "model": "HyenaDNA",
+  "embd_type": "mean",
+  "total_samples": 214,
+  "total_time_seconds": 6.82950234413147,
+  "inference_latency_ms_per_sample": 18.525072347337954,
+  "throughput_samples_per_second": 31.33464039058253,
+  "avg_batch_time_seconds": 0.4955456852912903,
+  "min_batch_time_seconds": 0.007831096649169922,
+  "max_batch_time_seconds": 1.3358421325683594,
+  "peak_vram_mb": 7680.90185546875,
+  "device": "NVIDIA GeForce RTX 3080 Ti"
+}
