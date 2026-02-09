@@ -21,7 +21,12 @@ def mock_evo_call(tokens, return_embeddings=False, layer_names=None):
 
 
 def embeding_evo(
-    tokens, batch_size, emb_positions, evo2_model, layer_name="blocks.28.mlp.l3"
+    tokens,
+    batch_size,
+    emb_positions,
+    evo2_model,
+    layer_name="blocks.28.mlp.l3",
+    embd_type="middle",
 ):
     print(f"Starting embedding extraction for layer: {layer_name}")
     embeddings = torch.asarray([])
@@ -33,7 +38,10 @@ def embeding_evo(
         _, batch_embeddings = evo2_model(
             batch_tokens, return_embeddings=True, layer_names=[layer_name]
         )
-        selected_embeddings = batch_embeddings[layer_name][:, emb_positions, :]
+        if embd_type == "mean":
+            selected_embeddings = batch_embeddings[layer_name].mean(dim=1, keepdim=True)
+        else:
+            selected_embeddings = batch_embeddings[layer_name][:, emb_positions, :]
         embeddings = torch.cat((embeddings, selected_embeddings.cpu()), dim=0)
         print(f"Batch {i + 1} done")
 
@@ -50,11 +58,18 @@ def main():
     parser.add_argument(
         "--output_name", required=True, help="Output prefix for saving results"
     )
+    parser.add_argument(
+        "--embd_type",
+        default="middle",
+        choices=["middle", "mean"],
+        help="Type of embedding to extract: middle or mean",
+    )
     args = parser.parse_args()
 
     PATH_DATA = args.path_data
     OUTPUT_FOLDER = args.output_folder
     OUTPUT_NAME = args.output_name
+    EMBD_TYPE = args.embd_type
 
     print(f"Loading training data from {PATH_DATA}")
     fusion_data = io.load_fusions_from_fusionaitxt(PATH_DATA)
@@ -76,10 +91,20 @@ def main():
     emb_pos = [tokens_fusion1.size(1) // 2]
     print("Extracting embeddings for test sequences")
     emb1 = embeding_evo(
-        tokens_fusion1, 4, emb_pos, evo2_model, layer_name="blocks.28.mlp.l3"
+        tokens_fusion1,
+        4,
+        emb_pos,
+        evo2_model,
+        layer_name="blocks.28.mlp.l3",
+        embd_type=EMBD_TYPE,
     )
     emb2 = embeding_evo(
-        tokens_fusion2, 4, emb_pos, evo2_model, layer_name="blocks.28.mlp.l3"
+        tokens_fusion2,
+        4,
+        emb_pos,
+        evo2_model,
+        layer_name="blocks.28.mlp.l3",
+        embd_type=EMBD_TYPE,
     )
 
     print(f"Creating output folder at {OUTPUT_FOLDER}")

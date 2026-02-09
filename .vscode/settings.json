@@ -1,0 +1,8 @@
+{
+    "files.exclude": {
+        "fmlib": true,
+        "fmextractors": true,
+        "fusion-classifiers": true,
+        "notebooks": true
+    }
+}

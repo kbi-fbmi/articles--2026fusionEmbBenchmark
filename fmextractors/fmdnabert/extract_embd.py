@@ -35,7 +35,7 @@ def get_embeddings(tokens, model):
     return hidden_states
 
 
-def embeding_dna_bert(tokens, batch_size, emb_positions, model):
+def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
     print(f"Starting embedding extraction")
 
     num_batches = len(tokens) // batch_size + (len(tokens) % batch_size > 0)
@@ -46,9 +46,12 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model):
         print(f"Processing batch {i + 1}/{num_batches} with {len(batch_tokens)} tokens")
         batch_embeddings = get_embeddings(batch_tokens, model)
 
-        selected_embeddings = np.array(
-            [batch_embeddings[j, emb_positions[i * batch_size + j], :] for j in range(len(batch_tokens))]
-        )
+        if embd_type == "mean":
+            selected_embeddings = np.mean(batch_embeddings, axis=1, keepdims=True)
+        else:
+            selected_embeddings = np.array(
+                [batch_embeddings[j, emb_positions[i * batch_size + j], :] for j in range(len(batch_tokens))]
+            )[:, None, :]
         embeddings = (
             np.concatenate((embeddings, selected_embeddings), axis=0) if embeddings is not None else selected_embeddings
         )
@@ -88,11 +91,18 @@ def main():
     parser.add_argument("--path_data", required=True, help="Path to the  data file")
     parser.add_argument("--output_folder", required=True, help="Output folder for saving results")
     parser.add_argument("--output_name", required=True, help="Output prefix for saving results")
+    parser.add_argument(
+        "--embd_type",
+        default="middle",
+        choices=["middle", "mean"],
+        help="Type of embedding to extract: middle or mean",
+    )
     args = parser.parse_args()
 
     PATH_DATA = args.path_data
     OUTPUT_FOLDER = args.output_folder
     OUTPUT_NAME = args.output_name
+    EMBD_TYPE = args.embd_type
 
     # PATH_DATA = "PATH_TO_YOUR_DATA.txt"
     # OUTPUT_FOLDER = "./ouput"
@@ -113,16 +123,22 @@ def main():
     nptokens_fusion2 = torch.concatenate(nptokens_fusion2).to("cuda:0")
     emb_positions2 = np.asarray(emb_positions)
 
-    emb_data1 = embeding_dna_bert(nptokens_fusion1, 2, emb_positions1, dnabert2_model)
-    emb_data2 = embeding_dna_bert(nptokens_fusion2, 2, emb_positions2, dnabert2_model)
+    emb_data1 = embeding_dna_bert(nptokens_fusion1, 2, emb_positions1, dnabert2_model, EMBD_TYPE)
+    emb_data2 = embeding_dna_bert(nptokens_fusion2, 2, emb_positions2, dnabert2_model, EMBD_TYPE)
     print("Extracting embeddings for test sequences")
 
     print(f"Creating output folder at {OUTPUT_FOLDER}")
     Path(OUTPUT_FOLDER).mkdir(parents=True, exist_ok=True)
 
+    
     print("Saving embeddings to CSV files")
-    pd.DataFrame(emb_data1[:, 1, :]).to_csv(Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq1.csv", index=False, header=False)
-    pd.DataFrame(emb_data2[:, 1, :]).to_csv(Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq2.csv", index=False, header=False)
+
+    pd.DataFrame(emb_data1[:, 0, :]).to_csv(
+        Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq1.csv", index=False, header=False
+    )
+    pd.DataFrame(emb_data2[:, 0, :]).to_csv(
+        Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq2.csv", index=False, header=False
+    )
 
     print("Processing completed successfully")
 

@@ -1,6 +1,10 @@
 {
   "folders": [
     {
+      "name": "repository-root",
+      "path": "."
+    },
+    {
       "name": "fmlib",
       "path": "fmlib"
     },

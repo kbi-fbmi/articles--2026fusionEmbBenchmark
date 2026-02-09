@@ -22,6 +22,7 @@ def embeding_nt(
     layer_name: str,
     parameters: Any,
     random_key: Any,
+    embd_type: str,
 ) -> np.ndarray:
     print(f"Starting embedding extraction for layer: {layer_name}")
 
@@ -31,7 +32,10 @@ def embeding_nt(
         batch_tokens = tokens[i * batch_size : (i + 1) * batch_size]
         print(f"Processing batch {i + 1}/{num_batches} with {len(batch_tokens)} tokens")
         batch_embeddings = nt_model.apply(parameters, random_key, batch_tokens)
-        selected_embeddings = batch_embeddings[layer_name][:, emb_positions, :]
+        if embd_type == "mean":
+            selected_embeddings = np.mean(batch_embeddings[layer_name], axis=1, keepdims=True)
+        else:
+            selected_embeddings = batch_embeddings[layer_name][:, emb_positions, :]
         embeddings = (
             np.concatenate((embeddings, selected_embeddings), axis=0) if embeddings is not None else selected_embeddings
         )
@@ -49,11 +53,18 @@ def main():
     parser.add_argument("--path_data", required=True, help="Path to the  data file")
     parser.add_argument("--output_folder", required=True, help="Output folder for saving results")
     parser.add_argument("--output_name", required=True, help="Output prefix for saving results")
+    parser.add_argument(
+        "--embd_type",
+        default="middle",
+        choices=["middle", "mean"],
+        help="Type of embedding to extract: middle or mean",
+    )
     args = parser.parse_args()
 
     PATH_DATA = args.path_data
     OUTPUT_FOLDER = args.output_folder
     OUTPUT_NAME = args.output_name
+    EMBD_TYPE = args.embd_type
 
     # PATH_DATA = "/mnt/e/Data/Fuse/fusionai_train_sim_107.txt"
     # OUTPUT_FOLDER = "./ouput"
@@ -85,8 +96,26 @@ def main():
 
     emb_pos = [tokens_fusions1.shape[1] // 2]
     print("Extracting embeddings for test sequences")
-    emb_data1 = embeding_nt(tokens_fusions1, 4, emb_pos, forward_fn, f"embeddings_{emb_layer}", parameters, random_key)
-    emb_data2 = embeding_nt(tokens_fusions2, 4, emb_pos, forward_fn, f"embeddings_{emb_layer}", parameters, random_key)
+    emb_data1 = embeding_nt(
+        tokens_fusions1,
+        4,
+        emb_pos,
+        forward_fn,
+        f"embeddings_{emb_layer}",
+        parameters,
+        random_key,
+        EMBD_TYPE,
+    )
+    emb_data2 = embeding_nt(
+        tokens_fusions2,
+        4,
+        emb_pos,
+        forward_fn,
+        f"embeddings_{emb_layer}",
+        parameters,
+        random_key,
+        EMBD_TYPE,
+    )
 
     print(f"Creating output folder at {OUTPUT_FOLDER}")
     Path(OUTPUT_FOLDER).mkdir(parents=True, exist_ok=True)
