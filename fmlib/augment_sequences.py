@@ -9,33 +9,10 @@ import random
 import sys
 from pathlib import Path
 
+from fmlib.io import load_fusions_from_fusionaitxt
+
 # Add path to fmlib module
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
-def load_fusions_from_fusionaitxt(file_path, fused_lambda=None):
-    data = []
-    with open(file_path, "r") as f:
-        for line in f:
-            columns = line.strip().split("\t")
-            if len(columns) == 11:
-                entry = {
-                    "gene1": columns[0],
-                    "chr1": columns[1],
-                    "pos1": int(columns[2]),
-                    "strand1": columns[3],
-                    "gene2": columns[4],
-                    "chr2": columns[5],
-                    "pos2": int(columns[6]),
-                    "strand2": columns[7],
-                    "sequence1": columns[8],
-                    "sequence2": columns[9],
-                    "target": columns[10],
-                }
-                if "N" in entry["sequence1"] or "N" in entry["sequence2"]:
-                    continue
-                data.append(entry)
-    return data
 
 
 def mutate_sequence(sequence: str, mutation_rate: float) -> str:
