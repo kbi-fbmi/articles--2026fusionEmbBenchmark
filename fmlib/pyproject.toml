@@ -1,6 +1,6 @@
 [project]
 name = "fmlib"
-version = "0.1.25"
+version = "0.1.26"
 description = "# FBME Bio Library – Tools for Biomedical and Bioinformatics Research"
 readme = "README.md"
 requires-python = ">=3.11"
