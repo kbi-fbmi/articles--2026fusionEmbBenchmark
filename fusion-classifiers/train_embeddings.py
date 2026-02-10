@@ -5,19 +5,19 @@ import sys
 from pathlib import Path
 
 import fmlib.io as fmio
-import pandas as pd
 import torch
+from fmlib.embd import load_fusion_embeddings
 
 import ai as ai
 
 
 def load_and_prepare_data(data_folder, prefix):
-    train = fmio.load_fusion_embeddings(
+    train = load_fusion_embeddings(
         data_folder / f"{prefix}_train_seq1.csv",
         data_folder / f"{prefix}_train_seq2.csv",
         data_folder / "fusionai_train_target.csv",
     )
-    test_full = fmio.load_fusion_embeddings(
+    test_full = load_fusion_embeddings(
         data_folder / f"{prefix}_test_seq1.csv",
         data_folder / f"{prefix}_test_seq2.csv",
         data_folder / "fusionai_test_target.csv",
