@@ -65,7 +65,7 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
             selected_embeddings = np.mean(batch_embeddings, axis=1, keepdims=True)
         else:
             selected_embeddings = np.array(
-                [batch_embeddings[j, emb_positions[i * batch_size + j], :] for j in range(len(batch_tokens))]
+                [[batch_embeddings[j, emb_positions[i * batch_size + j], :]] for j in range(len(batch_tokens))]
             )
 
         embeddings_list.append(selected_embeddings)  # Append to list instead
@@ -144,7 +144,7 @@ def main():
     # OUTPUT_FOLDER = "./ouput"
     # OUTPUT_NAME = "bert_train"
     # EMBD_TYPE = "middle"
-    # BATCH_SIZE = 4
+    # BATCH_SIZE = 2
 
     print(f"Loading training data from {PATH_DATA}")
     fusion_data = io.load_fusions_from_fusionaitxt(PATH_DATA)
