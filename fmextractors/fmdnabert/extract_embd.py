@@ -66,7 +66,7 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
         else:
             selected_embeddings = np.array(
                 [batch_embeddings[j, emb_positions[i * batch_size + j], :] for j in range(len(batch_tokens))]
-            )[:, None, :]
+            )
 
         embeddings_list.append(selected_embeddings)  # Append to list instead
 
@@ -140,9 +140,12 @@ def main():
     BATCH_SIZE = args.batch_size
 
     # PATH_DATA = "/mnt/e/Data/Fuse/fusionai_train_sim.txt"
+    # PATH_DATA = "../../test_data/fusionai_test_sim.txt"
     # OUTPUT_FOLDER = "./ouput"
     # OUTPUT_NAME = "bert_train"
-    # EMBD_TYPE = "mean"
+    # EMBD_TYPE = "middle"
+    # BATCH_SIZE = 4
+
     print(f"Loading training data from {PATH_DATA}")
     fusion_data = io.load_fusions_from_fusionaitxt(PATH_DATA)
 
@@ -152,11 +155,11 @@ def main():
     print("Tokenizing sequences")
     nptokens_fusion1, emb_positions = tokenize_sequence_parallel(extr_key(fusion_data, "sequence1"), tokenize_dna, 16)
     nptokens_fusion1 = torch.concatenate(nptokens_fusion1)  # Keep on CPU, move to GPU only during forward pass
-    emb_positions1 = np.asarray(emb_positions)
+    emb_positions1 = np.asarray(emb_positions)[:, 0]
 
     nptokens_fusion2, emb_positions = tokenize_sequence_parallel(extr_key(fusion_data, "sequence2"), tokenize_dna, 16)
     nptokens_fusion2 = torch.concatenate(nptokens_fusion2)  # Keep on CPU, move to GPU only during forward pass
-    emb_positions2 = np.asarray(emb_positions)
+    emb_positions2 = np.asarray(emb_positions)[:, 0]
 
     total_start = time.time()
 
