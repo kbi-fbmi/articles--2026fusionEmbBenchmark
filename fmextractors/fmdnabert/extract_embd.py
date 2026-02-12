@@ -47,7 +47,7 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
     print(f"Starting embedding extraction")
 
     num_batches = len(tokens) // batch_size + (len(tokens) % batch_size > 0)
-    embeddings = None
+    embeddings_list = []  # Use list instead of concatenating every iteration
     batch_times = []
 
     # Track peak VRAM
@@ -67,12 +67,16 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
             selected_embeddings = np.array(
                 [batch_embeddings[j, emb_positions[i * batch_size + j], :] for j in range(len(batch_tokens))]
             )[:, None, :]
-        embeddings = (
-            np.concatenate((embeddings, selected_embeddings), axis=0) if embeddings is not None else selected_embeddings
-        )
+
+        embeddings_list.append(selected_embeddings)  # Append to list instead
+
         batch_time = time.time() - batch_start
         batch_times.append(batch_time)
         print(f"Batch {i + 1} done - Time: {batch_time:.3f}s")
+
+    # Concatenate all at once at the end - much more memory efficient!
+    print("Concatenating all embeddings...")
+    embeddings = np.concatenate(embeddings_list, axis=0)
 
     metrics = {
         "batch_times": batch_times,
@@ -121,17 +125,24 @@ def main():
         choices=["middle", "mean"],
         help="Type of embedding to extract: middle or mean",
     )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=1,
+        help="Batch size for embedding extraction (default: 1)",
+    )
     args = parser.parse_args()
 
     PATH_DATA = args.path_data
     OUTPUT_FOLDER = args.output_folder
     OUTPUT_NAME = args.output_name
     EMBD_TYPE = args.embd_type
+    BATCH_SIZE = args.batch_size
 
-    # PATH_DATA = "PATH_TO_YOUR_DATA.txt"
+    # PATH_DATA = "/mnt/e/Data/Fuse/fusionai_train_sim.txt"
     # OUTPUT_FOLDER = "./ouput"
     # OUTPUT_NAME = "bert_train"
-
+    # EMBD_TYPE = "mean"
     print(f"Loading training data from {PATH_DATA}")
     fusion_data = io.load_fusions_from_fusionaitxt(PATH_DATA)
 
@@ -139,18 +150,19 @@ def main():
     dnabert2_model = AutoModel.from_pretrained("zhihan1996/DNABERT-2-117M", trust_remote_code=True).to("cuda:0")
 
     print("Tokenizing sequences")
-    nptokens_fusion1, emb_positions = tokenize_sequence_parallel(extr_key(fusion_data, "sequence1"), tokenize_dna, 32)
+    nptokens_fusion1, emb_positions = tokenize_sequence_parallel(extr_key(fusion_data, "sequence1"), tokenize_dna, 16)
     nptokens_fusion1 = torch.concatenate(nptokens_fusion1)  # Keep on CPU, move to GPU only during forward pass
     emb_positions1 = np.asarray(emb_positions)
 
-    nptokens_fusion2, emb_positions = tokenize_sequence_parallel(extr_key(fusion_data, "sequence2"), tokenize_dna, 32)
+    nptokens_fusion2, emb_positions = tokenize_sequence_parallel(extr_key(fusion_data, "sequence2"), tokenize_dna, 16)
     nptokens_fusion2 = torch.concatenate(nptokens_fusion2)  # Keep on CPU, move to GPU only during forward pass
     emb_positions2 = np.asarray(emb_positions)
 
     total_start = time.time()
 
-    emb_data1, metrics1 = embeding_dna_bert(nptokens_fusion1, 2, emb_positions1, dnabert2_model, EMBD_TYPE)
-    emb_data2, metrics2 = embeding_dna_bert(nptokens_fusion2, 2, emb_positions2, dnabert2_model, EMBD_TYPE)
+    # Use batch size from command line argument
+    emb_data1, metrics1 = embeding_dna_bert(nptokens_fusion1, BATCH_SIZE, emb_positions1, dnabert2_model, EMBD_TYPE)
+    emb_data2, metrics2 = embeding_dna_bert(nptokens_fusion2, BATCH_SIZE, emb_positions2, dnabert2_model, EMBD_TYPE)
 
     total_time = time.time() - total_start
 
