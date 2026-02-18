@@ -8,7 +8,11 @@ Gene fusions are hybrid genes formed from portions of two different genes and ar
 
 ## Results
 
-Comprehensive benchmarking results comparing model performance on gene fusion detection are available in the [notebook](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/compare_models.ipynb).
+Comprehensive benchmarking results comparing model performance on gene fusion classification are available in the following notebooks:
+
+- **[compare_models.ipynb](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/compare_models.ipynb)** - Overall model performance comparison on test set
+- **[compare_mean_emb_models.ipynb](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/compare_mean_emb_models.ipynb)** - Comparison of mean embedding representations vs concatenated embeddings
+- **[robustness_testing.ipynb](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/robustness_testing.ipynb)** - Robustness evaluation with random mutations and sequence shifts
 
 ### Key Components
 
