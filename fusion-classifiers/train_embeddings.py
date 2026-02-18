@@ -22,6 +22,7 @@ def load_and_prepare_data(data_folder, prefix):
         data_folder / f"{prefix}_test_seq2.csv",
         data_folder / "fusionai_test_target.csv",
     )
+
     test, valid = ai.split_test(test_full)
     print(f"Training data shape: {train[0].shape}")
     print(f"Validation data shape: {valid[0].shape}")
@@ -142,7 +143,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--embedding-type",
         required=True,
-        choices=["nt", "evo", "bert", "hyena"],
         help="Type of embedding (data prefix) to use (nt, evo, bert, hyena)",
     )
     parser.add_argument("--data-folder", required=True, help="Path to data folder containing embeddings")

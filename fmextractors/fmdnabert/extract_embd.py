@@ -60,10 +60,11 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
         # batch_tokens = batch_tokens.to("cuda:0")
         print(f"Processing batch {i + 1}/{num_batches} with {len(batch_tokens)} tokens")
         batch_embeddings = get_embeddings(batch_tokens, model)
-
+        print(f"shape batch: {batch_embeddings.shape}")
         if embd_type == "mean":
             selected_embeddings = np.mean(batch_embeddings, axis=1, keepdims=True)
         else:
+            print(f"middle position: {emb_positions[i * batch_size : (i * batch_size + len(batch_tokens))]}")
             selected_embeddings = np.array(
                 [[batch_embeddings[j, emb_positions[i * batch_size + j], :]] for j in range(len(batch_tokens))]
             )
@@ -89,7 +90,7 @@ def embeding_dna_bert(tokens, batch_size, emb_positions, model, embd_type):
     return embeddings, metrics
 
 
-def padding_tokens(token, padding_size=2143, front_value=1, backvalue=2):
+def padding_tokens(token, padding_size=2152, front_value=1, backvalue=2):
     # Pad the token tensor to the specified size
     if padding_size < token.size(1):
         raise ValueError(f"Padding size {padding_size} is less than the token size {token.size(1)}")
@@ -165,9 +166,6 @@ def main():
 
     # Use batch size from command line argument
     emb_data1, metrics1 = embeding_dna_bert(nptokens_fusion1, BATCH_SIZE, emb_positions1, dnabert2_model, EMBD_TYPE)
-    emb_data2, metrics2 = embeding_dna_bert(nptokens_fusion2, BATCH_SIZE, emb_positions2, dnabert2_model, EMBD_TYPE)
-
-    total_time = time.time() - total_start
 
     print("Extracting embeddings for test sequences")
 
@@ -177,9 +175,16 @@ def main():
     print("Saving embeddings to CSV files")
 
     pd.DataFrame(emb_data1[:, 0, :]).to_csv(Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq1.csv", index=False, header=False)
+
+    del emb_data1
+    torch.cuda.empty_cache()  # Clear GPU memory after saving first set of embeddings
+
+    emb_data2, metrics2 = embeding_dna_bert(nptokens_fusion2, BATCH_SIZE, emb_positions2, dnabert2_model, EMBD_TYPE)
+    print("Saving embeddings to CSV files")
     pd.DataFrame(emb_data2[:, 0, :]).to_csv(Path(OUTPUT_FOLDER) / f"{OUTPUT_NAME}_seq2.csv", index=False, header=False)
 
     # Compute and save metrics using shared library
+    total_time = time.time() - total_start
     metrics_summary = compute_metrics_summary("DNABERT-2", EMBD_TYPE, metrics1, metrics2, total_time)
     save_metrics(metrics_summary, OUTPUT_FOLDER, OUTPUT_NAME)
 
