@@ -1,6 +1,6 @@
-# Benchmarking Genomic Foundation Models for Gene Fusion Detection
+# Benchmarking Genomic Foundation Models for Binary Classification of Gene Fusion Breakpoints from DNA Sequences
 
-This repository contains benchmarking framework for evaluating multiple genomic foundation models on gene fusion detection from DNA sequences. The project implements embeddings extraction from various state-of-the-art foundation models and trains classification models to detect fusion genes.
+This repository contains benchmarking framework for evaluating multiple genomic foundation models on gene fusion classification from DNA sequences. The project implements embeddings extraction from various state-of-the-art foundation models and trains classification models to detect fusion genes.
 
 ## Overviews
 
@@ -34,7 +34,7 @@ The following genomic foundation models are benchmarked:
 - **Dataset from FusionAI project**:[FusionAI data homepage](https://compbio.uth.edu/FusionGDB2/FusionAI/)
 - **Training Data**: [FusionGDB2 training set](https://compbio.uth.edu/FusionGDB2/FusionAI/fg_newdata_train.txt)
 - **Testing Data**: [FusionGDB2 testing set](https://compbio.uth.edu/FusionGDB2/FusionAI/fg_newdata_test.txt)
-- **Precomputed Embeddings**: Available at [Zenodo](https://zenodo.org/records/17898581)
+- **Precomputed Embeddings**: Available at [Zenodo](https://zenodo.org/records/18713246)
 
 Embeddings are computed from DNA sequences and serve as input features for downstream classification models.
 
@@ -57,6 +57,8 @@ fmfusions/
 │   └── train_script_example.sh # Batch training script
 └── notebooks/                  # Analysis notebooks
     └── compare_models.ipynb    # Results comparison
+    └── rubstness_testing.ipynb
+    └── compare_mean_embd_models.ipynb
 ```
 
 ## Quick Start
@@ -149,7 +151,7 @@ jupyter notebook compare_models.ipynb
 ## Data Resources
 
 - Original FusionAI datasets: [FusionGDB2](https://compbio.uth.edu/FusionGDB2/)
-- Precomputed embeddings and results: [Zenodo](https://zenodo.org/records/17898581)
+- Precomputed embeddings and results: [Zenodo](https://zenodo.org/records/18713246)
 
 
 ## License

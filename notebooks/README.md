@@ -1,6 +1,6 @@
 # Notebooks - Analysis and Visualization
 
-This directory contains Jupyter notebooks for the article "Benchmarking Genomic Foundation Models for Gene Fusion Detection".
+This directory contains Jupyter notebooks for the article **"Benchmarking Genomic Foundation Models for Binary Classification of Gene Fusion Breakpoints from DNA Sequences"**.
 
 ## Overview
 
@@ -15,12 +15,15 @@ The notebooks provide comprehensive analysis including:
 
 ### Main Notebook
 
-- **[compare_models.ipynb](compare_models.ipynb)**: Primary analysis notebook that compares all benchmarked models
+- **[compare_models.ipynb](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/compare_models.ipynb)**: Primary analysis notebook that compares all benchmarked models
   - Downloads precomputed embeddings and trained models from Zenodo
   - Performs t-SNE visualization of embedding spaces
   - Analyzes classification performance
   - Compares sample efficiency and learning curves
   - Generates publication-ready figures
+  - **[compare_mean_emb_models.ipynb](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/compare_mean_emb_models.ipynb)** - Comparison of mean embedding representations vs concatenated embeddings
+  - **[robustness_testing.ipynb](https://github.com/kbi-fbmi/articles--2026fusionEmbBenchmark/blob/main/notebooks/robustness_testing.ipynb)** - Robustness evaluation with random mutations and sequence shifts
+
 
 ### Utilities
 
@@ -66,7 +69,7 @@ The notebooks provide comprehensive analysis including:
 ## Data Sources
 
 The notebooks automatically download data from Zenodo:
-- **Zenodo Record**: [17898581](https://zenodo.org/records/17898581)
+- **Zenodo Record**: [18713246](https://zenodo.org/records/18713246)
 - **Embeddings**: Precomputed features from DNABERT, NT, Hyena, and EVO2
 - **Trained Models**: Pre-trained neural network and SVM classifiers
 
@@ -123,7 +126,7 @@ If automatic download fails:
 ```python
 # Manually download from Zenodo
 from helpers import zenodo_get_and_unzip
-zenodo_get_and_unzip('17898581', 'embeddings.zip', 'download')
+zenodo_get_and_unzip('18713246', 'embeddings.zip', 'download')
 ```
 
 ### Memory Issues
